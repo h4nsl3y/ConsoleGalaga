@@ -1,0 +1,38 @@
+[5/15/2026 5:23:27 PM] :  ERROR: Error executing non-query: Keyword not supported: 'provider'.
+[5/15/2026 5:23:29 PM] :  ERROR: Failed to add player : Keyword not supported: 'provider'.
+[5/15/2026 5:24:47 PM] :  ERROR: Error executing non-query: Keyword not supported: 'provider'.
+[5/15/2026 5:24:47 PM] :  ERROR: Failed to add player : Keyword not supported: 'provider'.
+[5/15/2026 5:26:57 PM] :  ERROR: Error executing non-query: String or binary data would be truncated in table 'GALAGA.dbo.player', column 'Name'. Truncated value: '   '.
+The statement has been terminated.
+[5/15/2026 5:26:57 PM] :  ERROR: Failed to add player : String or binary data would be truncated in table 'GALAGA.dbo.player', column 'Name'. Truncated value: '   '.
+The statement has been terminated.
+[5/16/2026 11:27:25 AM] :  ERROR: Error executing query: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:27:25 AM] :  ERROR: Failed to retrieve top score records: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:29:32 AM] :  ERROR: Error executing query: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:29:32 AM] :  ERROR: Failed to retrieve top score records: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:29:34 AM] :  ERROR: Error executing query: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:29:34 AM] :  ERROR: Failed to retrieve top score records: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:29:35 AM] :  ERROR: Error executing query: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:29:35 AM] :  ERROR: Failed to retrieve top score records: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:29:35 AM] :  ERROR: Error executing query: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:29:35 AM] :  ERROR: Failed to retrieve top score records: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:29:35 AM] :  ERROR: Error executing query: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:29:35 AM] :  ERROR: Failed to retrieve top score records: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:29:36 AM] :  ERROR: Error executing query: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:29:36 AM] :  ERROR: Failed to retrieve top score records: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:29:36 AM] :  ERROR: Error executing query: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:29:36 AM] :  ERROR: Failed to retrieve top score records: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:29:36 AM] :  ERROR: Error executing query: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:29:36 AM] :  ERROR: Failed to retrieve top score records: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:31:24 AM] :  ERROR: Error executing query: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:31:24 AM] :  ERROR: Failed to retrieve top score records: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:31:25 AM] :  ERROR: Error executing query: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:31:25 AM] :  ERROR: Failed to retrieve top score records: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:31:26 AM] :  ERROR: Error executing query: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:31:26 AM] :  ERROR: Failed to retrieve top score records: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:31:26 AM] :  ERROR: Error executing query: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:31:26 AM] :  ERROR: Failed to retrieve top score records: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:31:26 AM] :  ERROR: Error executing query: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:31:26 AM] :  ERROR: Failed to retrieve top score records: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:31:27 AM] :  ERROR: Error executing query: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.
+[5/16/2026 11:31:27 AM] :  ERROR: Failed to retrieve top score records: Login failed for user 'CORPADDS\DAYFORCE1LUDG2O$'.

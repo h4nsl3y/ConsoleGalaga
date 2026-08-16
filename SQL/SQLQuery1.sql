@@ -1,0 +1,222 @@
+Drop database galaga
+
+CREATE DATABASE GALAGA
+
+use [GALAGA]
+ 
+CREATE TABLE Player
+(
+	PlayerId INT IDENTITY(1,1) PRIMARY KEY,
+	PlayerName VARCHAR(3) NOT NULL,
+	DateCreated DATETIME DEFAULT CURRENT_TIMESTAMP,
+	LastModified DATETIME DEFAULT CURRENT_TIMESTAMP
+)
+
+CREATE TABLE PlayerAudit
+(
+	PlayerId INT NOT NULL,
+	Action VARCHAR(6) NOT NULL,
+	LastModified DATETIME DEFAULT CURRENT_TIMESTAMP
+)
+ 
+CREATE TABLE ScoreRecord
+(
+	ScoreRecordId INT IDENTITY(100,1) PRIMARY KEY,
+	PlayerId INT NOT NULL,
+	Score TINYINT DEFAULT 0,
+	LastModified DATETIME DEFAULT CURRENT_TIMESTAMP
+	CONSTRAINT FK_SCORE_PLAYER_PLAYERID
+		FOREIGN KEY (PlayerID)
+		REFERENCES Player(PlayerID)
+)
+
+CREATE TABLE ScoreRecordAudit
+(
+	ScoreRecordId INT NOT NULL,
+	Action VARCHAR(6) NOT NULL,
+	LastModified DATETIME DEFAULT CURRENT_TIMESTAMP
+)
+
+CREATE TABLE AppUser
+(
+	UserId INT IDENTITY(1000,1) PRIMARY KEY,
+	UserName  VARCHAR(255) NOT NULL,
+	[Password] VARCHAR(255) NOT NULL,
+	LastModified DATETIME DEFAULT CURRENT_TIMESTAMP
+)
+
+CREATE TABLE AppUserAudit
+(
+	UserId INT NOT NULL,
+	Action VARCHAR(6) NOT NULL,
+	LastModified DATETIME DEFAULT CURRENT_TIMESTAMP
+)
+
+------ Stored Procedure -----
+CREATE PROCEDURE sp_GetLeaderBoard
+AS
+	BEGIN
+		SELECT TOP 5 P.PLAYERNAME, S.SCORE FROM PLAYER P
+		INNER JOIN SCORERECORD S ON P.PLAYERID = S.PLAYERID
+		ORDER BY S.SCORE DESC;
+	END
+GO
+ 
+EXEC sp_GetLeaderBoard;
+
+------ Player Trigger -----
+CREATE TRIGGER trg_Player_AfterInsert
+	ON dbo.Player
+	AFTER INSERT
+	AS
+	BEGIN
+	    SET NOCOUNT ON;
+		INSERT INTO PlayerAudit (PlayerID, [Action])
+		SELECT PlayerID, 'INSERT'
+		FROM inserted
+	END;
+GO
+
+CREATE TRIGGER trg_Player_AfterUpdate
+	ON dbo.Player
+	AFTER UPDATE
+	AS
+	BEGIN
+	    SET NOCOUNT ON;
+
+		UPDATE P
+		SET P.LastModified = CURRENT_TIMESTAMP
+		FROM dbo.Player P
+			INNER JOIN inserted I
+			ON P.PlayerID = I.PlayerID;
+
+		INSERT INTO PlayerAudit (PlayerID, [Action])
+		SELECT PlayerID, 'UPDATE'
+		FROM inserted
+	END;
+GO
+
+CREATE TRIGGER trg_Player_AfterDelete
+	ON dbo.Player
+	AFTER DELETE
+	AS
+	BEGIN
+	    SET NOCOUNT ON;
+		INSERT INTO PlayerAudit (PlayerID, [Action])
+		SELECT PlayerID, 'DELETE'
+		FROM inserted
+	END;
+GO
+
+----- Score Trigger -----
+
+CREATE TRIGGER trg_Score_AfterInsert
+	ON dbo.ScoreRecord
+	AFTER INSERT
+	AS
+	BEGIN
+	    SET NOCOUNT ON;
+		INSERT INTO ScoreRecordAudit (ScoreRecordID, [Action])
+		SELECT ScoreRecordID, 'INSERT'
+		FROM inserted
+	END;
+GO
+
+CREATE TRIGGER trg_Score_AfterUpdate
+	ON dbo.ScoreRecord
+	AFTER UPDATE
+	AS
+	BEGIN
+		SET NOCOUNT ON;
+		UPDATE S
+		SET LastModified = CURRENT_TIMESTAMP
+		FROM dbo.ScoreRecord S
+		INNER JOIN inserted I
+			ON S.ScoreRecordID = I.ScoreRecordID;
+
+		INSERT INTO ScoreRecordAudit (ScoreRecordID, [Action])
+		SELECT ScoreRecordID, 'UPDATE'
+		FROM inserted;
+	END;
+GO
+
+CREATE TRIGGER trg_Score_AfterDelete
+	ON dbo.ScoreRecord
+	AFTER DELETE
+	AS
+	BEGIN
+	    SET NOCOUNT ON;
+		INSERT INTO ScoreRecordAudit (ScoreRecordID, [Action])
+		SELECT ScoreRecordID, 'DELETE'
+		FROM inserted
+	END;
+GO
+
+----- AppUser Trigger -----
+
+CREATE TRIGGER trg_AppUser_AfterInsert
+	ON dbo.AppUser
+	AFTER INSERT
+	AS
+	BEGIN
+	    SET NOCOUNT ON;
+		INSERT INTO AppUserAudit (UserID , [Action])
+		SELECT UserID , 'INSERT'
+		FROM inserted
+	END;
+GO
+
+CREATE TRIGGER trg_AppUser_AfterUpdate
+	ON dbo.AppUser
+	AFTER UPDATE
+	AS
+	BEGIN
+		SET NOCOUNT ON;
+		UPDATE U
+		SET LastModified = CURRENT_TIMESTAMP
+		FROM dbo.AppUser U
+		INNER JOIN inserted I
+			ON U.UserID = I.UserID;
+
+		INSERT INTO AppUserAudit (UserID, [Action])
+		SELECT UserID, 'UPDATE'
+		FROM inserted;
+	END;
+GO
+
+CREATE TRIGGER trg_AppUser_AfterDelete
+	ON dbo.AppUser
+	AFTER DELETE
+	AS
+	BEGIN
+	    SET NOCOUNT ON;
+		INSERT INTO AppUserAudit (UserID , [Action])
+		SELECT UserID , 'DELETE'
+		FROM inserted
+	END;
+GO
+
+----- Dummy Data -----
+INSERT INTO PLAYER
+VALUES('MUZ', CURRENT_TIMESTAMP,CURRENT_TIMESTAMP),
+	  ('MAT', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+      ('HAN', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP),
+	  ('HAA', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+
+INSERT INTO SCORERECORD
+VALUES(1,10,CURRENT_TIMESTAMP),
+      (2,30,CURRENT_TIMESTAMP),
+      (3,15,CURRENT_TIMESTAMP),
+	  (4,150,CURRENT_TIMESTAMP)
+
+INSERT INTO APPUSER 
+VALUES( 'admin', '$2y$12$ikhIEpOuTTsErt.kaB0VVObixEU0agor3sweSV0v59i6mZMp6u2L6',CURRENT_TIMESTAMP)
+ 
+SELECT * FROM PLAYER 
+SELECT * FROM SCORERECORD
+SELECT * FROM APPUSER
+
+
+update ScoreRecord 
+set playerid = 4 
+where ScoreRecordID = 103

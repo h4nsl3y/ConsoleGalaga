@@ -1,0 +1,479 @@
+@startuml
+
+'skinparam classAttributeIconSize 0
+skinparam linetype ortho
+top to bottom direction
+
+title Galaga - Class Diagram
+
+' Package: Helpers
+package "Helpers.LoggerHelper" {
+    interface ILogger {
+        + Log(message: string): void
+        + LogError(message: string): void
+    }
+
+    class Logger <<Singleton>> {
+        - {static} _instance: Logger?
+        - _filePath: string
+        - _logDirectory: string
+        - Logger()
+        + {static} Instance: Logger
+        + {static} Log(message: string): void
+        + {static} LogError(message: string): void
+        - createFile(): void
+        - createDirectory(): void
+        - write(type: string, message: string): void
+    }
+
+    Logger ..|> ILogger
+}
+
+' Package: DataLayer - DB Connection
+package "DataLayer.DBConnection" {
+    interface IDBConnection {
+        + ExecuteNonQueryAsync(query: string, parameters: SqlParameter[]): Task<IDatabaseResponse<int>>
+        + ExecuteQueryAsync(query: string, parameters: SqlParameter[]): Task<IDatabaseResponse<DataTable>>
+        + ExecuteScalarAsync(query: string, parameters: SqlParameter[]): Task<IDatabaseResponse<string>>
+    }
+
+    class SQLExecutor {
+        - _logger: ILogger
+        - _sqlConnection: SqlConnection?
+        - _connectionString: string
+        + SQLExecutor(logger: ILogger, connString: string)
+        + ExecuteNonQueryAsync(query: string, parameters: SqlParameter[]): Task<IDatabaseResponse<int>>
+        + ExecuteQueryAsync(query: string, parameters: SqlParameter[]): Task<IDatabaseResponse<DataTable>>
+        + ExecuteScalarAsync(query: string, parameters: SqlParameter[]): Task<IDatabaseResponse<string>>
+        - OpenConnectionAsync(): Task
+        - CloseConnectionAsync(): Task
+    }
+
+    SQLExecutor ..|> IDBConnection
+    SQLExecutor --> ILogger
+}
+
+' Package: DataLayer - DAL
+package "DataLayer.PlayerDAL" {
+    interface IPlayerDAL {
+        + AddPlayerAsync(player: IPlayer): Task<IDatabaseResponse<int>>
+        + DeletePlayerByIdAsync(playerId: int): Task<IDatabaseResponse<int>>
+        + EditPlayerAsync(player: IPlayer): Task<IDatabaseResponse<int>>
+        + GetPlayerByIdAsync(playerId: int): Task<IDatabaseResponse<IPlayer>>
+    }
+
+    class PlayerDAL {
+        - _dataBaseConnection: IDBConnection
+        + PlayerDAL(dBConnection: IDBConnection)
+        + AddPlayerAsync(player: IPlayer): Task<IDatabaseResponse<int>>
+        + DeletePlayerByIdAsync(playerId: int): Task<IDatabaseResponse<int>>
+        + EditPlayerAsync(player: IPlayer): Task<IDatabaseResponse<int>>
+        + GetPlayerByIdAsync(playerId: int): Task<IDatabaseResponse<IPlayer>>
+        - ConvertToPlayer(row: DataRow): IPlayer
+    }
+
+    PlayerDAL ..|> IPlayerDAL
+    PlayerDAL --> IDBConnection
+}
+
+package "DataLayer.ScoreRecordDAL" {
+    interface IScoreRecordDAL {
+        + AddScoreRecordAsync(scoreRecord: IScoreRecord): Task<IDatabaseResponse<int>>
+        + GetScoreRecordAsync(scoreRecordId: int): Task<IDatabaseResponse<IScoreRecord>>
+        + GetTopScoreRecordAsync(topIndex: int): Task<IDatabaseResponse<List<IScoreRecord>>>
+        + EditScoreRecordAsync(scoreRecord: IScoreRecord): Task<IDatabaseResponse<int>>
+        + DeleteScoreRecordAsync(scoreRecordId: int): Task<IDatabaseResponse<int>>
+    }
+
+    class ScoreRecordDAL {
+        - _dataBaseConnection: IDBConnection
+        + ScoreRecordDAL(dBConnection: IDBConnection)
+        + AddScoreRecordAsync(scoreRecord: IScoreRecord): Task<IDatabaseResponse<int>>
+        + GetScoreRecordAsync(scoreRecordId: int): Task<IDatabaseResponse<IScoreRecord>>
+        + GetTopScoreRecordAsync(topIndex: int): Task<IDatabaseResponse<List<IScoreRecord>>>
+        + EditScoreRecordAsync(scoreRecord: IScoreRecord): Task<IDatabaseResponse<int>>
+        + DeleteScoreRecordAsync(scoreRecordId: int): Task<IDatabaseResponse<int>>
+        - ConvertToScore(row: DataRow): IScoreRecord
+    }
+
+    ScoreRecordDAL ..|> IScoreRecordDAL
+    ScoreRecordDAL --> IDBConnection
+}
+
+' Package: BusinessLayer
+package "BusinessLayer.Models" {
+    interface ILeaderBoardRecord {
+        + Name: string
+        + Score: int
+    }
+
+    class LeaderboardRecord {
+        + Name: string
+        + Score: int
+        + LeaderboardRecord(name: string, score: int)
+    }
+
+    LeaderboardRecord ..|> ILeaderBoardRecord
+}
+
+package "BusinessLayer.LeaderBoardService" {
+    interface ILeaderBoardService {
+        + GetTopScoresAsync(limit: int): Task<List<ILeaderBoardRecord>>
+    }
+
+    class LeaderBoardService {
+        - _playerBL: IPlayerBL
+        - _scoreRecordBL: IScoreRecordBL
+        - _logger: ILogger
+        + LeaderBoardService(playerBL: IPlayerBL, scoreRecordBL: IScoreRecordBL, logger: ILogger)
+        + GetTopScoresAsync(limit: int): Task<List<ILeaderBoardRecord>>
+    }
+
+    LeaderBoardService ..|> ILeaderBoardService
+    LeaderBoardService --> IPlayerBL
+    LeaderBoardService --> IScoreRecordBL
+    LeaderBoardService --> ILogger
+    LeaderBoardService ..> ILeaderBoardRecord
+}
+
+package "BusinessLayer.PlayerBL" {
+    interface IPlayerBL {
+        + AddPlayerAsync(player: IPlayer): Task<bool>
+        + DeletePlayerByIdAsync(playerId: int): Task<bool>
+        + EditPlayerAsync(player: IPlayer): Task<bool>
+        + GetPlayerByIdAsync(playerId: int): Task<IPlayer?>
+    }
+
+    class PlayerBL {
+        - _playerDAL: IPlayerDAL
+        - _logger: ILogger
+        + PlayerBL(playerDAL: IPlayerDAL, logger: ILogger)
+        + AddPlayerAsync(player: IPlayer): Task<bool>
+        + DeletePlayerByIdAsync(playerId: int): Task<bool>
+        + EditPlayerAsync(player: IPlayer): Task<bool>
+        + GetPlayerByIdAsync(playerId: int): Task<IPlayer?>
+    }
+
+    PlayerBL ..|> IPlayerBL
+    PlayerBL --> IPlayerDAL
+    PlayerBL --> ILogger
+}
+
+package "BusinessLayer.ScoreRecordBL" {
+    interface IScoreRecordBL {
+        + AddScoreRecordAsync(scoreRecord: IScoreRecord): Task<bool>
+        + DeleteScoreRecordAsync(scoreRecordId: int): Task<bool>
+        + EditScoreRecordAsync(scoreRecord: IScoreRecord): Task<bool>
+        + GetScoreRecordAsync(scoreRecordId: int): Task<IScoreRecord?>
+        + GetTopScoreRecordsAsync(topIndex: int): Task<List<IScoreRecord>?>
+    }
+
+    class ScoreRecordBL {
+        - _scoreRecordDAL: IScoreRecordDAL
+        - _logger: ILogger
+        + ScoreRecordBL(scoreRecordDAL: IScoreRecordDAL, logger: ILogger)
+        + AddScoreRecordAsync(scoreRecord: IScoreRecord): Task<bool>
+        + DeleteScoreRecordAsync(scoreRecordId: int): Task<bool>
+        + EditScoreRecordAsync(scoreRecord: IScoreRecord): Task<bool>
+        + GetScoreRecordAsync(scoreRecordId: int): Task<IScoreRecord?>
+        + GetTopScoreRecordsAsync(topIndex: int): Task<List<IScoreRecord>?>
+    }
+
+    ScoreRecordBL ..|> IScoreRecordBL
+    ScoreRecordBL --> IScoreRecordDAL
+    ScoreRecordBL --> ILogger
+}
+
+
+' Package: DataLayer - Models
+package "DataLayer.Models.DatabaseResponse" {
+    interface "IDatabaseResponse<T>" as IDatabaseResponse {
+        + Success: bool
+        + Message: string
+        + Data: T?
+    }
+
+    class "DatabaseResponse<T>" as DatabaseResponse {
+        + Success: bool
+        + Message: string
+        + Data: T?
+        - DatabaseResponse(success: bool, message: string, data: T?)
+        + {static} SuccessResult(data: T, message: string): DatabaseResponse<T>
+        + {static} FailureResult(message: string): DatabaseResponse<T>
+    }
+
+    DatabaseResponse ..|> IDatabaseResponse
+}
+
+package "DataLayer.Models.Player" {
+    interface IPlayer {
+        + PlayerID: int
+        + Name: string
+        + DateCreated: DateTime
+    }
+
+    class Player {
+        + PlayerID: int
+        + Name: string
+        + DateCreated: DateTime
+        + Player(playerId: int, name: string, dateCreated: DateTime)
+    }
+
+    Player ..|> IPlayer
+}
+
+package "DataLayer.Models.Score" {
+    interface IScoreRecord {
+        + ScoreRecordId: int
+        + PlayerId: int
+        + Score: int
+        + LastModified: DateTime
+    }
+
+    class ScoreRecord {
+        + ScoreRecordId: int
+        + PlayerId: int
+        + Score: int
+        + LastModified: DateTime
+        + ScoreRecord(scoreRecordId: int, playerId: int, score: int, lastModified: DateTime)
+    }
+
+    ScoreRecord ..|> IScoreRecord
+}
+
+
+' Package: ConsoleGalaga - Game Engine
+package "ConsoleGalaga.GameEngine" {
+    interface IGameEngine {
+        + RunGameLoop(): Task
+        + Update(): void
+    }
+
+    class GameEngine {
+        - _display: IDisplay
+        - _vesselFactory: ICharacterFactory<IVessel>
+        - _bulletFactory: IBulletFactory
+        - _enemyFactory: ICharacterFactory<IEnemy>  
+        - _enemySpawnInterval: int
+        - _tickDelayMs: int
+        - _elements: IList<IGameElement>
+        - _vessel: IVessel
+        - _score: int
+        - _enemySpawnCounter: int
+        + GameEngine(display: IDisplay, vesselFactory: ICharacterFactory<IVessel>, bulletFactory: IBulletFactory, enemyFactory: ICharacterFactory<IEnemy>, enemySpawnInterval: int, tickDelayMs: int)
+        + RunGameLoop(): Task
+        + Update(): void
+        - HandleVesselShooting(): void
+        - CheckBulletEnemyCollisions(): void
+        - CheckEnemyReachedVessel(): void
+        - RemoveDeadElements(): void
+    }
+
+    GameEngine ..|> IGameEngine
+    GameEngine --> IDisplay
+    GameEngine --> IBulletFactory
+    GameEngine --> ICharacterFactory : uses IVessel / IEnemy
+    GameEngine --> IGameElement
+    GameEngine --> IVessel
+}
+
+' Package: ConsoleGalaga - Display
+package "ConsoleGalaga.Display" {
+    interface IDisplay {
+        + Name: string
+        + Description: string
+        + Width: int
+        + Height: int
+        + Initialize(): void
+        + Draw(elements: IList<IGameElement>, score: int, health: int): void
+        + ShowGameOver(score: int): void
+    }
+
+    class Display {
+        - {static} HorizontalBorder: string
+        - {static} VerticalBorder: string
+        + Name: string
+        + Description: string
+        + Width: int
+        + Height: int
+        + Display(name: string, description: string, width: int, height: int)
+        + Initialize(): void
+        + Draw(elements: IList<IGameElement>, score: int, health: int): void
+        + ShowGameOver(score: int): void
+        - DrawHorizontalBorder(): void
+        - DrawRowElements(elements: IList<IGameElement>): void
+    }
+
+    Display ..|> IDisplay
+    Display ..> IGameElement
+}
+
+' Package: ConsoleGalaga - Factories
+package "ConsoleGalaga.Factory" {
+    interface IBulletFactory {
+        + Generate(x: int, y: int): IGameElement
+    }
+
+    interface "ICharacterFactory<T>" as ICharacterFactory {
+        + Generate(): T
+    }
+
+    class BulletFactory {
+        - _hBorder: Tuple<int, int>
+        - _vBorder: Tuple<int, int>
+        + BulletFactory(hBorder: Tuple<int,int>, vBorder: Tuple<int,int>)
+        + Generate(x: int, y: int): IGameElement
+    }
+
+    class EnemyFactory {
+        - {static} DefaultHealth: int
+        - _hBorder: Tuple<int, int>
+        - _vBorder: Tuple<int, int>
+        + EnemyFactory(hBorder: Tuple<int,int>, vBorder: Tuple<int,int>)
+        + Generate(): IEnemy
+    }
+
+    class VesselFactory {
+        - {static} DefaultHealth: int
+        - _hBorder: Tuple<int, int>
+        - _vBorder: Tuple<int, int>
+        + VesselFactory(hBorder: Tuple<int,int>, vBorder: Tuple<int,int>)
+        + Generate(): IVessel
+    }
+
+    BulletFactory ..|> IBulletFactory
+
+    EnemyFactory ..|> ICharacterFactory : IEnemy
+    VesselFactory ..|> ICharacterFactory : IVessel
+
+    BulletFactory ..> IceBullet : <<creates>>
+    EnemyFactory ..> Enemy : <<creates>>
+    VesselFactory ..> Vessel : <<creates>>
+}
+
+' Package: ConsoleGalaga - Characters
+package "ConsoleGalaga.Models.Characters" {
+    interface IPositionable {
+        + PositionX: int
+        + PositionY: int
+    }
+
+    interface IGameElement {
+        + GetSymbol(): string
+        + Behaviour(): void
+        + HitWall(): void
+    }
+
+    interface ICharacter {
+        + Health: int
+    }
+
+    interface IShooter {
+        + Shoot: bool
+    }
+
+    IGameElement --|> IPositionable
+    IShooter --|> IPositionable
+}
+
+package "ConsoleGalaga.Models.Characters.Vessels" {
+    interface IVessel {
+    }
+
+    class Vessel {
+        - _hBorder: Tuple<int, int>
+        - _vBorder: Tuple<int, int>
+        + Health: int
+        + PositionX: int
+        + PositionY: int
+        + Shoot: bool
+        + Vessel(health: int, hBorder: Tuple<int,int>, vBorder: Tuple<int,int>)
+        + Behaviour(): void
+        + GetSymbol(): string
+        + HitWall(): void
+    }
+
+    IVessel --|> IGameElement
+    IVessel --|> ICharacter
+    IVessel --|> IShooter
+    Vessel ..|> IVessel
+}
+
+package "ConsoleGalaga.Models.Characters.Enemy" {
+    interface IEnemy {
+        + IsAlive: bool
+        + Size: int
+        + OccupiesPosition(x: int, y: int): bool
+    }
+
+    class Enemy {
+        - _hBorder: Tuple<int, int>
+        - _vBorder: Tuple<int, int>
+        - _random: Random
+        + Health: int
+        + PositionX: int
+        + PositionY: int
+        + IsAlive: bool
+        + Size: int
+        + Enemy(health: int, hBorder: Tuple<int,int>, vBorder: Tuple<int,int>)
+        + GetSymbol(): string
+        + OccupiesPosition(x: int, y: int): bool
+        + Behaviour(): void
+        + HitWall(): void
+    }
+
+    IEnemy --|> IGameElement
+    IEnemy --|> ICharacter
+    Enemy ..|> IEnemy
+}
+
+' Package: ConsoleGalaga - Bullets
+package "ConsoleGalaga.Models.Bullets" {
+    interface IBullet {
+        + HasHit: bool
+    }
+
+    abstract class Bullet {
+        # _hBorder: Tuple<int, int>
+        # _vBorder: Tuple<int, int>
+        + PositionX: int
+        + PositionY: int
+        + HasHit: bool
+        + Bullet(x: int, y: int, hBorder: Tuple<int,int>, vBorder: Tuple<int,int>)
+        + {abstract} GetSymbol(): string
+        + {abstract} Behaviour(): void
+        + HitWall(): void
+    }
+
+    class IceBullet {
+        - _movementDirection: int
+        - _originalXAxis: int
+        + IceBullet(x: int, y: int, hBorder: Tuple<int,int>, vBorder: Tuple<int,int>)
+        + GetSymbol(): string
+        + Behaviour(): void
+        - Divert(): int
+    }
+
+    class SlashBullet {
+        + SlashBullet(x: int, y: int, hBorder: Tuple<int,int>, vBorder: Tuple<int,int>)
+        + GetSymbol(): string
+        + GetSymbol(index: BulletFrameEnum): string
+        + Behaviour(): void
+    }
+
+    IBullet --|> IGameElement
+    Bullet ..|> IBullet
+    IceBullet --|> Bullet
+    SlashBullet --|> Bullet
+    SlashBullet ..> BulletFrameEnum
+}
+
+' Package: ConsoleGalaga - Enums
+package "ConsoleGalaga.Enums" {
+    enum BulletFrameEnum {
+        frame1 = 1
+        frame2 = 2
+    }
+}
+
+@enduml
