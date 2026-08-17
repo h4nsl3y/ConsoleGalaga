@@ -1,7 +1,12 @@
 @startuml
 
+allowmixing
+
 'skinparam classAttributeIconSize 0
 skinparam linetype ortho
+skinparam packageStyle rectangle
+skinparam packageBorderThickness 2
+skinparam packageFontStyle bold
 top to bottom direction
 
 title Galaga - Class Diagram
@@ -29,8 +34,9 @@ package "Helpers.LoggerHelper" {
     Logger ..|> ILogger
 }
 
-' Package: DataLayer - DB Connection
-package "DataLayer.DBConnection" {
+' Package: DataLayer
+package "DataLayer" #D5F5E3 {
+package "DataLayer.DBConnection" #D5F5E3 {
     interface IDBConnection {
         + ExecuteNonQueryAsync(query: string, parameters: SqlParameter[]): Task<IDatabaseResponse<int>>
         + ExecuteQueryAsync(query: string, parameters: SqlParameter[]): Task<IDatabaseResponse<DataTable>>
@@ -54,7 +60,7 @@ package "DataLayer.DBConnection" {
 }
 
 ' Package: DataLayer - DAL
-package "DataLayer.PlayerDAL" {
+package "DataLayer.PlayerDAL" #D5F5E3 {
     interface IPlayerDAL {
         + AddPlayerAsync(player: IPlayer): Task<IDatabaseResponse<int>>
         + DeletePlayerByIdAsync(playerId: int): Task<IDatabaseResponse<int>>
@@ -76,7 +82,7 @@ package "DataLayer.PlayerDAL" {
     PlayerDAL --> IDBConnection
 }
 
-package "DataLayer.ScoreRecordDAL" {
+package "DataLayer.ScoreRecordDAL" #D5F5E3 {
     interface IScoreRecordDAL {
         + AddScoreRecordAsync(scoreRecord: IScoreRecord): Task<IDatabaseResponse<int>>
         + GetScoreRecordAsync(scoreRecordId: int): Task<IDatabaseResponse<IScoreRecord>>
@@ -99,9 +105,11 @@ package "DataLayer.ScoreRecordDAL" {
     ScoreRecordDAL ..|> IScoreRecordDAL
     ScoreRecordDAL --> IDBConnection
 }
+}
 
 ' Package: BusinessLayer
-package "BusinessLayer.Models" {
+package "BusinessLayer" #D6EAF8 {
+package "BusinessLayer.Models" #D6EAF8 {
     interface ILeaderBoardRecord {
         + Name: string
         + Score: int
@@ -116,7 +124,7 @@ package "BusinessLayer.Models" {
     LeaderboardRecord ..|> ILeaderBoardRecord
 }
 
-package "BusinessLayer.LeaderBoardService" {
+package "BusinessLayer.LeaderBoardService" #D6EAF8 {
     interface ILeaderBoardService {
         + GetTopScoresAsync(limit: int): Task<List<ILeaderBoardRecord>>
     }
@@ -136,7 +144,7 @@ package "BusinessLayer.LeaderBoardService" {
     LeaderBoardService ..> ILeaderBoardRecord
 }
 
-package "BusinessLayer.PlayerBL" {
+package "BusinessLayer.PlayerBL" #D6EAF8 {
     interface IPlayerBL {
         + AddPlayerAsync(player: IPlayer): Task<bool>
         + DeletePlayerByIdAsync(playerId: int): Task<bool>
@@ -159,7 +167,7 @@ package "BusinessLayer.PlayerBL" {
     PlayerBL --> ILogger
 }
 
-package "BusinessLayer.ScoreRecordBL" {
+package "BusinessLayer.ScoreRecordBL" #D6EAF8 {
     interface IScoreRecordBL {
         + AddScoreRecordAsync(scoreRecord: IScoreRecord): Task<bool>
         + DeleteScoreRecordAsync(scoreRecordId: int): Task<bool>
@@ -183,10 +191,12 @@ package "BusinessLayer.ScoreRecordBL" {
     ScoreRecordBL --> IScoreRecordDAL
     ScoreRecordBL --> ILogger
 }
+}
 
 
 ' Package: DataLayer - Models
-package "DataLayer.Models.DatabaseResponse" {
+package "DataLayer.Models" #D5F5E3 {
+package "DataLayer.Models.DatabaseResponse" #D5F5E3 {
     interface "IDatabaseResponse<T>" as IDatabaseResponse {
         + Success: bool
         + Message: string
@@ -205,7 +215,7 @@ package "DataLayer.Models.DatabaseResponse" {
     DatabaseResponse ..|> IDatabaseResponse
 }
 
-package "DataLayer.Models.Player" {
+package "DataLayer.Models.Player" #D5F5E3 {
     interface IPlayer {
         + PlayerID: int
         + Name: string
@@ -222,7 +232,7 @@ package "DataLayer.Models.Player" {
     Player ..|> IPlayer
 }
 
-package "DataLayer.Models.Score" {
+package "DataLayer.Models.Score" #D5F5E3 {
     interface IScoreRecord {
         + ScoreRecordId: int
         + PlayerId: int
@@ -240,10 +250,17 @@ package "DataLayer.Models.Score" {
 
     ScoreRecord ..|> IScoreRecord
 }
+}
+
+' Package: Database
+package "GALAGA Database" #FDEBD0 {
+    database "Database" as GalagaDatabase
+}
 
 
 ' Package: ConsoleGalaga - Game Engine
-package "ConsoleGalaga.GameEngine" {
+package "ConsoleGalaga" #FCF3CF {
+package "Engine" {
     interface IGameEngine {
         + RunGameLoop(): Task
         + Update(): void
@@ -474,6 +491,185 @@ package "ConsoleGalaga.Enums" {
         frame1 = 1
         frame2 = 2
     }
+}
+
+}
+
+' Data access and database interaction
+SQLExecutor --> GalagaDatabase : opens SQL connection
+GameEngine ..> GalagaDatabase : persists score
+
+
+' Package: Controller - REST API
+package "Controller" #F5B7B1 {
+    class AppUserController <<ApiController>> {
+        - _appUserBL: IAppUserBL
+        - _logger: ILogger
+        + AppUserController(appUserBL: IAppUserBL, logger: ILogger)
+        + Authenticate(request: AppUserModel): Task<IActionResult>
+        + Register(request: IAppUserModel): Task<IActionResult>
+        + GetAllUsers(page: int, limit: int): Task<IActionResult>
+        + Delete(userId: int): Task<IActionResult>
+        + Update(request: IAppUserModel): Task<IActionResult>
+    }
+
+    class PlayerController <<ApiController>> {
+        - _playerBL: IPlayerBL
+        - _logger: ILogger
+        + PlayerController(playerBL: IPlayerBL, logger: ILogger)
+        + Add(playerName: string): Task<IActionResult>
+        + GetPlayer(playerId: int): Task<IActionResult>
+        + GetAllPlayers(page: int, limit: int): Task<IActionResult>
+        + Delete(playerId: int): Task<IActionResult>
+        + Update(request: IPlayerModel): Task<IActionResult>
+    }
+
+    class ScoreRecordController <<ApiController>> {
+        - _scoreRecordBL: IScoreRecordBL
+        - _logger: ILogger
+        + ScoreRecordController(scoreRecordBL: IScoreRecordBL, logger: ILogger)
+        + Add(request: IScoreRecordModel): Task<IActionResult>
+        + GetScoreRecord(scoreRecordId: int): Task<IActionResult>
+        + GetTopScoreRecords(page: int, limit: int): Task<IActionResult>
+        + Delete(scoreRecordId: int): Task<IActionResult>
+        + Update(request: IScoreRecordModel): Task<IActionResult>
+    }
+
+    class LeaderBoardController <<ApiController>> {
+        - _leaderBoardService: ILeaderBoardService
+        - _logger: ILogger
+        + LeaderBoardController(leaderBoardService: ILeaderBoardService, logger: ILogger)
+        + GetTopScores(page: int, limit: int): Task<IActionResult>
+    }
+
+    AppUserController --> IAppUserBL
+    PlayerController --> IPlayerBL
+    ScoreRecordController --> IScoreRecordBL
+    LeaderBoardController --> ILeaderBoardService
+    AppUserController --> ILogger
+    PlayerController --> ILogger
+    ScoreRecordController --> ILogger
+    LeaderBoardController --> ILogger
+}
+
+' Package: WebPageLibrary - React frontend and host
+package "WebPageLibrary" #E8DAEF {
+    class ReactUiController <<MvcController>> {
+        - {static} GalagaIndexPath: string
+        + GetGalagaUi(): IActionResult
+    }
+
+    class App <<ReactComponent>> {
+        - showAdmin: boolean
+        + App(): JSX.Element
+    }
+
+    class BaseApi <<AxiosClient>> {
+        + baseURL: string
+        + headers: object
+    }
+
+    interface IAppUserService {
+        + authenticate(username: string, password: string): Promise<boolean>
+        + register(username: string, password: string): Promise<boolean>
+        + getAllUsers(page: number, limit: number): Promise<IGridData<IAppUser>>
+        + deleteUser(userId: number): Promise<boolean>
+        + updateUser(username: string, password: string): Promise<boolean>
+    }
+
+    class AppUserService {
+        + authenticate(username: string, password: string): Promise<boolean>
+        + register(username: string, password: string): Promise<boolean>
+        + getAllUsers(page: number, limit: number): Promise<IGridData<IAppUser>>
+        + deleteUser(userId: number): Promise<boolean>
+        + updateUser(username: string, password: string): Promise<boolean>
+    }
+
+    interface IPlayerService {
+        + addPlayer(playerName: string): Promise<number>
+        + getPlayer(playerId: number): Promise<IPlayer>
+        + deletePlayer(playerId: number): Promise<boolean>
+        + editPlayer(playerId: number, playerName: string): Promise<boolean>
+        + getAllPlayers(page: number, limit: number): Promise<IGridData<IPlayer>>
+    }
+
+    class PlayerService {
+        + addPlayer(playerName: string): Promise<number>
+        + getPlayer(playerId: number): Promise<IPlayer>
+        + deletePlayer(playerId: number): Promise<boolean>
+        + editPlayer(playerId: number, playerName: string): Promise<boolean>
+        + getAllPlayers(page: number, limit: number): Promise<IGridData<IPlayer>>
+    }
+
+    interface IScoreRecordService {
+        + addScoreRecord(playerId: number, score: number): Promise<boolean>
+        + getScoreRecord(scoreRecordId: number): Promise<IScoreRecord>
+        + getTopScoreRecords(page: number, limit: number): Promise<IScoreRecord[]>
+        + deleteScoreRecord(scoreRecordId: number): Promise<boolean>
+        + editScoreRecord(scoreRecordId: number, playerId: number, score: number): Promise<boolean>
+    }
+
+    class ScoreRecordService {
+        + addScoreRecord(playerId: number, score: number): Promise<boolean>
+        + getScoreRecord(scoreRecordId: number): Promise<IScoreRecord>
+        + getTopScoreRecords(page: number, limit: number): Promise<IScoreRecord[]>
+        + deleteScoreRecord(scoreRecordId: number): Promise<boolean>
+        + editScoreRecord(scoreRecordId: number, playerId: number, score: number): Promise<boolean>
+    }
+
+    interface ILeaderboardService {
+        + getLeaderboardRecords(page: number, limit: number): Promise<IGridData<IRecord>>
+    }
+
+    class LeaderboardService {
+        + getLeaderboardRecords(page: number, limit: number): Promise<IGridData<IRecord>>
+    }
+
+    class IPlayer <<FrontendModel>> {
+        + playerId: number
+        + playerName: string
+        + dateCreated: string
+    }
+
+    class IScoreRecord <<FrontendModel>> {
+        + scoreRecordId: number
+        + playerId: number
+        + score: number
+        + lastModified: string
+    }
+
+    class IAppUser <<FrontendModel>> {
+        + username: string
+        + password: string
+    }
+
+    class IRecord <<FrontendModel>> {
+        + name: string
+        + score: number
+    }
+
+    class IGridData <<FrontendModel>>
+
+    class Area <<ReactComponent>>
+    class Navbar <<ReactComponent>>
+    class Particles <<ReactComponent>>
+
+    ReactUiController ..> App : redirects to
+    App --> Area
+    App --> Navbar
+    App --> Particles
+    AppUserService ..|> IAppUserService
+    PlayerService ..|> IPlayerService
+    ScoreRecordService ..|> IScoreRecordService
+    LeaderboardService ..|> ILeaderboardService
+    AppUserService --> BaseApi
+    PlayerService --> BaseApi
+    ScoreRecordService --> BaseApi
+    LeaderboardService --> BaseApi
+    AppUserService ..> AppUserController : HTTP
+    PlayerService ..> PlayerController : HTTP
+    ScoreRecordService ..> ScoreRecordController : HTTP
+    LeaderboardService ..> LeaderBoardController : HTTP
 }
 
 @enduml
